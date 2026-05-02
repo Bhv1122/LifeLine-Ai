@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LifeLine AI — Emergency Results</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .results-wrapper {
+      width: 100%;
+      max-width: 860px;
+      position: relative;
+      z-index: 2;
+      animation: fadeUp 0.7s ease both;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 0.95rem;
+      margin-bottom: 1.5rem;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: #fff; }
+
+    .results-card {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(24px);
+      border-radius: var(--radius-lg);
+      padding: 3rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .results-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: 0 0 4px 4px;
+    }
+    .results-card.risk-high::before   { background: linear-gradient(90deg, #ef4444, #ff6b6b); box-shadow: 0 0 30px rgba(239,68,68,0.4); }
+    .results-card.risk-moderate::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); box-shadow: 0 0 30px rgba(245,158,11,0.4); }
+    .results-card.risk-low::before    { background: linear-gradient(90deg, #22c55e, #4ade80); box-shadow: 0 0 30px rgba(34,197,94,0.4); }
+
+    .risk-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1.5rem;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 2rem;
+    }
+    .risk-badge.high     { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+    .risk-badge.moderate { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+    .risk-badge.low      { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
+
+    .action-text {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-family: var(--font-main);
+      font-weight: 800;
+      line-height: 1.25;
+      margin-bottom: 2rem;
+      letter-spacing: -0.5px;
+    }
+    .action-text.high     { color: #ef4444; }
+    .action-text.moderate { color: #f59e0b; }
+    .action-text.low      { color: #22c55e; }
+
+    .summary-box {
+      font-size: 1.1rem;
+      color: var(--text-dim);
+      line-height: 1.7;
+      padding: 1.5rem 2rem;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      margin-bottom: 2rem;
+    }
+
+    .meta-info {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.35);
+      margin-bottom: 2rem;
+    }
+
+    .hospital-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+      text-align: left;
+      margin-top: 2rem;
+    }
+    .hospital-item {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 1.25rem;
+      border-radius: var(--radius-md);
+      transition: border-color 0.3s;
+    }
+    .hospital-item:hover { border-color: rgba(255,255,255,0.2); }
+    .hospital-item h4 {
+      color: #fff;
+      font-size: 1.05rem;
+      margin-bottom: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .hospital-item h4 i { color: var(--accent); font-size: 0.9rem; }
+    .hospital-item p { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 0.15rem; }
+    .hospital-item .hospital-links {
+      display: flex; gap: 1rem; margin-top: 0.5rem;
+    }
+    .hospital-item .hospital-links a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: color 0.2s;
+    }
+    .hospital-item .hospital-links a:hover { color: #fff; }
+    .hospital-item .hospital-links a.call-link { color: var(--primary); }
+
+    .hospitals-title {
+      font-family: var(--font-main);
+      font-size: 1.3rem;
+      color: #fff;
+      margin-top: 2.5rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .hospitals-title i { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+  <div class="mesh-bg"></div>
+  <div class="particles">
+    <span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span>
+  </div>
+
+  <div class="results-wrapper">
+    <a href="/" class="back-link"><i class="fa-solid fa-arrow-left"></i> Return Home</a>
+
+    <div class="results-card risk-{{ risk_level|lower }}" id="results-card">
+
+      <div class="risk-badge {{ risk_level|lower }}">
+        {% if risk_level == 'High' %}<i class="fa-solid fa-triangle-exclamation"></i>
+        {% elif risk_level == 'Moderate' %}<i class="fa-solid fa-exclamation"></i>
+        {% else %}<i class="fa-solid fa-check-circle"></i>{% endif %}
+        {{ risk_level }} Risk
+      </div>
+
+      <div class="action-text {{ risk_level|lower }}">
+        "{{ action }}"
+      </div>
+
+      <div class="summary-box">
+        {{ summary }}
+      </div>
+
+      {% if ml_confidence %}
+      <div class="meta-info">
+        ML Confidence: {{ ml_confidence }}%
+      </div>
+      {% endif %}
+
+      {% if hospitals %}
+      <div class="hospitals-title"><i class="fa-solid fa-hospital"></i> Nearby Emergency Centers</div>
+      <div class="hospital-grid">
+        {% for h in hospitals %}
+        <div class="hospital-item">
+          <h4><i class="fa-solid fa-location-dot"></i> {{ h.name }}</h4>
+          <p>{{ h.distance }} &middot; ~{{ h.time }}</p>
+          <div class="hospital-links">
+            {% if h.phone %}<a href="tel:{{ h.phone }}" class="call-link"><i class="fa-solid fa-phone"></i> {{ h.phone }}</a>{% endif %}
+            {% if h.lat and h.lng %}<a href="https://www.google.com/maps/search/?api=1&query={{ h.lat }},{{ h.lng }}" target="_blank"><i class="fa-solid fa-map"></i> Map</a>{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if risk_level == 'High' %}
+      <div style="margin-top:2.5rem; display:flex; flex-direction:column; gap:1rem; align-items:center;">
+        {% if sms_link %}
+        <a href="{{ sms_link }}" id="auto-sms-link" class="btn btn-danger sos-btn" style="display:inline-flex; width: 100%; max-width: 300px;">
+          <i class="fa-solid fa-message"></i> Send SOS SMS
+        </a>
+        {% endif %}
+        <a href="tel:102" class="btn btn-danger sos-btn" style="display:inline-flex; width: 100%; max-width: 300px;">
+          <i class="fa-solid fa-phone"></i> Call Ambulance (102)
+        </a>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+  <script>
+    // Auto-read the action aloud and attempt to auto-open SMS
+    window.onload = () => {
+      if ('speechSynthesis' in window) {
+        const u = new SpeechSynthesisUtterance("{{ action }}");
+        window.speechSynthesis.speak(u);
+      }
+      
+      const smsLink = "{{ sms_link|safe }}";
+      if (smsLink) {
+        // Attempt to auto-open the SMS link to pre-fill the message
+        setTimeout(() => {
+          window.location.href = smsLink;
+        }, 1000);
+      }
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LifeLine AI — Act fast. Stay safe.</title>
+  <meta name="description" content="LifeLine AI: An emergency decision engine that uses ML and AI to analyze medical symptoms, reports, and trigger SOS in critical moments.">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+  <!-- Ambient backgrounds -->
+  <div class="mesh-bg"></div>
+  <div class="particles">
+    <span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span>
+  </div>
+
+  <!-- ═══ Navigation ═══ -->
+  <nav class="nav">
+    <a href="/" class="nav-brand">
+      <span class="pulse-dot"></span> LifeLine AI
+    </a>
+    <div class="nav-right">
+      <select id="app-lang" onchange="changeLanguage(this)" class="lang-select" title="App Language">
+        <option value="en-US" data-translate="en">🌐 English</option>
+        <option value="hi-IN" data-translate="hi">🌐 Hindi</option>
+        <option value="kn-IN" data-translate="kn">🌐 Kannada</option>
+        <option value="ta-IN" data-translate="ta">🌐 Tamil</option>
+        <option value="te-IN" data-translate="te">🌐 Telugu</option>
+        <option value="mr-IN" data-translate="mr">🌐 Marathi</option>
+        <option value="bn-IN" data-translate="bn">🌐 Bengali</option>
+        <option value="es-ES" data-translate="es">🌐 Spanish</option>
+        <option value="fr-FR" data-translate="fr">🌐 French</option>
+      </select>
+    </div>
+  </nav>
+
+  <!-- ═══ Hero Section ═══ -->
+  <section class="hero" id="hero">
+    <div class="container">
+      <div class="hero-badge"><i class="fa-solid fa-shield-heart"></i> Emergency Decision Engine</div>
+      <h1><span class="gradient-text">LifeLine AI</span><br>Act fast. Stay safe.</h1>
+      <p>An AI that decides when you can't — voice analysis, report scanning, and one-tap SOS.</p>
+    </div>
+  </section>
+
+  <!-- ═══ Status Toast ═══ -->
+  <div class="container">
+    <div class="status-toast" id="demo-user-text"></div>
+  </div>
+
+  <!-- ═══ Feature Cards ═══ -->
+  <div class="container" style="position:relative; z-index:2; padding-bottom:5rem;">
+
+    <div class="features-row">
+
+      <!-- ── 1. Voice Recorder ── -->
+      <div class="glass-card reveal" id="voice-card">
+        <div class="card-accent red"></div>
+        <div class="card-icon red"><i class="fa-solid fa-microphone-lines"></i></div>
+        <h2 class="card-title">Voice Recorder</h2>
+        <p class="card-desc">Speak your symptoms. Our ML model instantly classifies the risk level and suggests immediate action.</p>
+        <button class="btn btn-red btn-full" id="mic-btn" onclick="startListening()">
+          <i class="fa-solid fa-microphone"></i> Start Recording
+        </button>
+      </div>
+
+      <!-- ── 2. Report Analyzer ── -->
+      <div class="glass-card reveal" id="report-card">
+        <div class="card-accent blue"></div>
+        <div class="card-icon blue"><i class="fa-solid fa-file-waveform"></i></div>
+        <h2 class="card-title">Report Analyzer</h2>
+        <p class="card-desc">Upload a medical report or prescription image. Gemini Vision AI reads and simplifies it instantly.</p>
+        <input type="file" id="report-upload" style="display:none;" accept="image/*,.pdf" onchange="onFileChosen()">
+        <div class="btn-group">
+          <button class="btn btn-ghost" onclick="document.getElementById('report-upload').click()" style="flex:1;">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Choose File
+          </button>
+          <button class="btn btn-ghost" onclick="openCamera()" style="flex:1;">
+            <i class="fa-solid fa-camera"></i> Camera
+          </button>
+        </div>
+        <button class="btn btn-blue btn-full" onclick="uploadRealReport()" style="margin-top:0.75rem;">
+          <i class="fa-solid fa-magnifying-glass-chart"></i> Analyze Report
+        </button>
+        <div id="file-chosen-text" style="margin-top:0.75rem; color:var(--text-dim); font-size:0.85rem; text-align:center;"></div>
+      </div>
+
+      <!-- ── 3. Hospital Finder ── -->
+      <div class="glass-card reveal" id="hospital-card">
+        <div class="card-accent green"></div>
+        <div class="card-icon green"><i class="fa-solid fa-hospital-user"></i></div>
+        <h2 class="card-title">Hospital Finder</h2>
+        <p class="card-desc">Quickly find and navigate to the nearest medical centers based on your current live location.</p>
+        <button class="btn btn-green btn-full" onclick="findHospitals()">
+          <i class="fa-solid fa-location-crosshairs"></i> Find Nearby Hospitals
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ── 4. SOS Manager (full width) ── -->
+    <div class="glass-card full-width reveal" id="sos-card" style="margin-bottom:2rem;">
+      <div class="card-accent green"></div>
+      <div style="text-align:center; margin-bottom: 2.5rem;">
+        <div class="card-icon green" style="margin: 0 auto 1.5rem;">
+          <i class="fa-solid fa-shield-heart"></i>
+        </div>
+        <h2 class="card-title">SOS Manager</h2>
+        <p class="card-desc" style="max-width:500px; margin:0 auto;">Trigger an immediate SOS alert — notifies your trusted contacts and finds nearby hospitals in real-time.</p>
+      </div>
+
+      <div style="text-align:center; margin-bottom:3rem;">
+        <button class="btn btn-danger sos-btn" onclick="triggerRealSOS()">
+          <i class="fa-solid fa-truck-medical"></i> Trigger SOS
+        </button>
+      </div>
+
+      <!-- Circle of Trust -->
+      <div style="background:rgba(0,0,0,0.25); padding:2rem; border-radius:var(--radius-md); border:1px solid var(--glass-border);">
+        <div style="text-align:center; margin-bottom:1.5rem;">
+          <h3 style="font-size:1.3rem; color:#fff; margin-bottom:0.4rem;">Circle of Trust</h3>
+          <p style="color:var(--text-dim); font-size:0.9rem;">Manage your emergency contacts</p>
+        </div>
+
+        <div style="display:flex; gap:0.75rem; margin-bottom:1rem; flex-wrap:wrap;">
+          <input type="text" id="contact-name" class="input" style="flex:1; min-width:140px;" placeholder="Contact Name">
+          <input type="tel" id="contact-phone" class="input" style="flex:1; min-width:140px;" placeholder="10-digit Phone" maxlength="10">
+        </div>
+        <div style="display:flex; gap:0.75rem; justify-content:center; margin-bottom:1.5rem;">
+          <button class="btn btn-green btn-sm" onclick="addContact()"><i class="fa-solid fa-plus"></i> Add</button>
+          <button class="btn btn-ghost btn-sm" onclick="importFromPhonebook()"><i class="fa-solid fa-address-book"></i> Import</button>
+        </div>
+
+        <div id="contact-list" style="display:flex; flex-direction:column; gap:0.5rem;"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══ Footer ═══ -->
+  <footer class="footer">
+    LifeLine AI &middot; Built to save lives &middot; &copy; 2026
+  </footer>
+
+  <!-- ═══ Camera Modal ═══ -->
+  <div class="modal" id="camera-modal">
+    <div class="modal-box" style="max-width: 500px;">
+      <h3><i class="fa-solid fa-camera" style="color:var(--accent);"></i> Capture Report</h3>
+      <div style="position:relative; width:100%; aspect-ratio: 4/3; background:#000; border-radius:var(--radius-md); overflow:hidden; margin-bottom:1.5rem;">
+        <video id="camera-preview" autoplay playsinline style="width:100%; height:100%; object-fit:cover;"></video>
+      </div>
+      <canvas id="camera-canvas" style="display:none;"></canvas>
+      <div style="display:flex; gap:0.75rem; justify-content:center;">
+        <button class="btn btn-blue btn-sm" onclick="capturePhoto()"><i class="fa-solid fa-circle-dot"></i> Capture</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeCamera()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Edit Contact Modal ═══ -->
+  <div class="modal" id="edit-modal">
+    <div class="modal-box">
+      <h3><i class="fa-solid fa-pen-to-square" style="color:var(--accent);"></i> Edit Contact</h3>
+      <input type="text" id="edit-name" class="input" style="margin-bottom:0.75rem;" placeholder="Name">
+      <input type="tel" id="edit-phone" class="input" style="margin-bottom:1.5rem;" placeholder="Phone" maxlength="10">
+      <div style="display:flex; gap:0.75rem; justify-content:center;">
+        <button class="btn btn-blue btn-sm" onclick="saveEdit()">Save</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeModal('edit-modal')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Main Script ═══ -->
+  <script>
+    // ── Scroll reveal ──
+    function reveal() {
+      document.querySelectorAll('.reveal').forEach(el => {
+        if (el.getBoundingClientRect().top < window.innerHeight - 80) el.classList.add('active');
+      });
+    }
+    window.addEventListener('scroll', reveal);
+    reveal();
+
+    // ══════════════════════════════
+    //  CONTACT MANAGEMENT
+    // ══════════════════════════════
+    let currentAction = null;
+
+    async function loadContacts() {
+      try {
+        const response = await fetch('/api/contacts');
+        const contacts = await response.json();
+        const list = document.getElementById('contact-list');
+        list.innerHTML = '';
+        if (contacts.length === 0) {
+          list.innerHTML = '<div style="text-align:center; color:var(--text-dim); padding:1rem;">No contacts yet — add one above.</div>';
+          return;
+        }
+        contacts.forEach(c => {
+          list.innerHTML += `
+            <div class="contact-item">
+              <div>
+                <span class="contact-name">${c.name}</span>
+                <span class="contact-phone">${c.phone}</span>
+              </div>
+              <div class="contact-actions">
+                <button class="btn btn-ghost btn-sm" onclick="openEditModal(${c.id}, '${c.name}', '${c.phone}')"><i class="fa-solid fa-pen"></i> Edit</button>
+                <button class="btn btn-ghost btn-sm" style="color:var(--danger); border-color:rgba(239,68,68,0.3);" onclick="deleteContact(${c.id})"><i class="fa-solid fa-trash"></i> Delete</button>
+              </div>
+            </div>`;
+        });
+      } catch(e) { console.error(e); }
+    }
+
+    async function addContact() {
+      const name = document.getElementById('contact-name').value.trim();
+      const phone = document.getElementById('contact-phone').value.trim();
+      if (!name || !phone) return alert('Please enter both name and phone.');
+      const phoneClean = phone.replace(/\D/g, '');
+      if (phoneClean.length !== 10) return alert('Mobile number must be exactly 10 digits.');
+
+      try {
+        await fetch('/api/contacts', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({name, phone})
+        });
+        loadContacts();
+        document.getElementById('contact-name').value = '';
+        document.getElementById('contact-phone').value = '';
+      } catch(e) { console.error(e); }
+    }
+
+    async function importFromPhonebook() {
+      if ('contacts' in navigator && 'ContactsManager' in window) {
+        try {
+          const contacts = await navigator.contacts.select(['name','tel'], {multiple:true});
+          if (contacts.length > 0) {
+            document.getElementById('contact-name').value = contacts[0].name[0];
+            document.getElementById('contact-phone').value = contacts[0].tel[0];
+          }
+        } catch(e) { alert('Import cancelled or failed: ' + e.message); }
+      } else {
+        alert('Contacts API not supported. Try Chrome on Android.');
+      }
+    }
+
+    function openEditModal(id, name, phone) {
+      document.getElementById('edit-name').value = name;
+      document.getElementById('edit-phone').value = phone;
+      currentAction = { id };
+      document.getElementById('edit-modal').classList.add('active');
+    }
+
+    async function saveEdit() {
+      const id = currentAction.id;
+      const name = document.getElementById('edit-name').value.trim();
+      const phone = document.getElementById('edit-phone').value.trim();
+      try {
+        await fetch(`/api/contacts/${id}`, {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({name, phone})
+        });
+        closeModal('edit-modal');
+        loadContacts();
+      } catch(e) { console.error(e); }
+    }
+
+    async function deleteContact(id) {
+      if (!confirm('Delete this contact?')) return;
+      try {
+        await fetch(`/api/contacts/${id}`, { method: 'DELETE' });
+        loadContacts();
+      } catch(e) { console.error(e); }
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+
+    window.addEventListener('DOMContentLoaded', loadContacts);
+
+    // ══════════════════════════════
+    //  LANGUAGE & TRANSLATION
+    // ══════════════════════════════
+    let currentLang = 'en-US';
+
+    (function restoreLang() {
+      const match = document.cookie.match(/googtrans=\/en\/([^;]+)/);
+      if (match) {
+        const code = match[1];
+        const sel = document.getElementById('app-lang');
+        for (let i = 0; i < sel.options.length; i++) {
+          if (sel.options[i].getAttribute('data-translate') === code) {
+            sel.selectedIndex = i;
+            currentLang = sel.options[i].value;
+            break;
+          }
+        }
+      }
+    })();
+
+    function changeLanguage(sel) {
+      const selected = sel.options[sel.selectedIndex];
+      currentLang = selected.value;
+      const code = selected.getAttribute('data-translate');
+      if (recognition) recognition.lang = currentLang;
+
+      function setCookie(n, v) {
+        document.cookie = n + '=' + v + '; path=/';
+        document.cookie = n + '=' + v + '; path=/; domain=.' + window.location.hostname;
+      }
+      if (code === 'en') {
+        document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+        document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.' + window.location.hostname;
+      } else {
+        setCookie('googtrans', '/en/' + code);
+      }
+      window.location.reload();
+    }
+
+    // ══════════════════════════════
+    //  VOICE RECORDER
+    // ══════════════════════════════
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition;
+    let isListening = false;
+
+    // Check browser support at load time
+    if (!SpeechRecognition) {
+      console.warn('[Voice] SpeechRecognition API not available');
+      document.getElementById('mic-btn').innerHTML = '<i class="fa-solid fa-microphone-slash"></i> Not Supported';
+      document.getElementById('mic-btn').disabled = true;
+    } else {
+      recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = currentLang;
+      recognition.maxAlternatives = 1;
+
+      recognition.onresult = async function(event) {
+        let interim = '', final = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          if (event.results[i].isFinal) final += event.results[i][0].transcript;
+          else interim += event.results[i][0].transcript;
+        }
+        if (interim) document.getElementById('demo-user-text').innerText = `Hearing: "${interim}..."`;
+        if (final) {
+          document.getElementById('demo-user-text').innerText = `You said: "${final}" — Analyzing...`;
+          resetMic(); isListening = false;
+          try {
+            const res = await fetch('/api/voice_command', {
+              method:'POST', headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({ command: final })
+            });
+            const data = await res.json();
+            window.location.href = `/results?risk_level=${encodeURIComponent(data.risk_level)}&action=${encodeURIComponent(data.action)}&summary=${encodeURIComponent(data.summary)}`;
+          } catch(e) {
+            document.getElementById('demo-user-text').innerText = 'Error analyzing voice. Try again.';
+          }
+        }
+      };
+
+      recognition.onend = function() { isListening = false; resetMic(); };
+
+      recognition.onerror = function(event) {
+        isListening = false; resetMic();
+        console.error('[Voice Error]', event.error);
+        const msgs = {
+          'not-allowed': '⚠️ Microphone access denied. Click the lock icon in your address bar → Allow microphone.',
+          'no-speech':   '⚠️ No speech detected. Make sure your mic is working and try again.',
+          'network':     '⚠️ Network error during recognition. Check your internet connection.',
+          'audio-capture': '⚠️ No microphone found. Please connect a microphone.',
+          'service-not-allowed': '⚠️ Speech service not allowed. Try using Chrome on localhost or HTTPS.',
+          'aborted': ''
+        };
+        const m = msgs[event.error] || `⚠️ Voice error: ${event.error}`;
+        if (m) document.getElementById('demo-user-text').innerText = m;
+      };
+    }
+
+    function resetMic() {
+      document.getElementById('mic-btn').innerHTML = '<i class="fa-solid fa-microphone"></i> Start Recording';
+      document.getElementById('mic-btn').className = 'btn btn-red btn-full';
+    }
+
+    function startListening() {
+      if (!recognition) {
+        document.getElementById('demo-user-text').innerText = '⚠️ Speech Recognition not supported. Use Google Chrome.';
+        return;
+      }
+      if (isListening) { recognition.stop(); return; }
+
+      // Verify mic permission first
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+          // Permission granted — stop the test stream and start recognition
+          stream.getTracks().forEach(t => t.stop());
+          recognition.lang = document.getElementById('app-lang').value;
+          document.getElementById('demo-user-text').innerText = '🎙️ Listening... Speak now.';
+          document.getElementById('mic-btn').innerHTML = '<i class="fa-solid fa-microphone fa-beat" style="color:#fff;"></i> Stop Recording';
+          document.getElementById('mic-btn').className = 'btn btn-danger btn-full';
+          isListening = true;
+          try { recognition.start(); } catch(e) { isListening = false; resetMic(); }
+        }).catch(err => {
+          console.error('[Mic Permission]', err);
+          document.getElementById('demo-user-text').innerText = '⚠️ Microphone access denied. Click the lock icon in address bar → Allow microphone, then retry.';
+        });
+      } else {
+        // Fallback: just try starting directly
+        recognition.lang = document.getElementById('app-lang').value;
+        document.getElementById('demo-user-text').innerText = '🎙️ Listening... Speak now.';
+        document.getElementById('mic-btn').innerHTML = '<i class="fa-solid fa-microphone fa-beat" style="color:#fff;"></i> Stop Recording';
+        document.getElementById('mic-btn').className = 'btn btn-danger btn-full';
+        isListening = true;
+        try { recognition.start(); } catch(e) { isListening = false; resetMic(); }
+      }
+    }
+
+    // ══════════════════════════════
+    //  REPORT UPLOAD
+    // ══════════════════════════════
+    function onFileChosen() {
+      const f = document.getElementById('report-upload');
+      document.getElementById('file-chosen-text').innerText = f.files.length > 0 ? '📎 ' + f.files[0].name : '';
+    }
+
+    async function uploadRealReport() {
+      const fileInput = document.getElementById('report-upload');
+      if (fileInput.files.length === 0) return alert('Please choose a file first.');
+      document.getElementById('demo-user-text').innerText = 'Analyzing report with AI...';
+      const formData = new FormData();
+      formData.append('report', fileInput.files[0]);
+      try {
+        const response = await fetch('/api/upload_report', { method: 'POST', body: formData });
+        const data = await response.json();
+        window.location.href = `/results?risk_level=${encodeURIComponent(data.risk_level)}&action=${encodeURIComponent(data.action)}&summary=${encodeURIComponent(data.summary)}&ml_confidence=${data.ml_confidence || ''}`;
+      } catch(e) {
+        alert('Error analyzing document.');
+        document.getElementById('demo-user-text').innerText = '';
+      }
+    }
+
+    // ══════════════════════════════
+    //  HOSPITAL FINDER & SOS
+    // ══════════════════════════════
+    async function findHospitals() {
+      if (!('geolocation' in navigator)) return alert('Geolocation not supported.');
+      document.getElementById('demo-user-text').innerText = 'Locating nearest hospitals...';
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        const lat = pos.coords.latitude, lng = pos.coords.longitude;
+        try {
+          const res = await fetch('/api/hospitals', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ lat, lng })
+          });
+          const data = await res.json();
+          window.location.href = `/results?risk_level=Low&action=${encodeURIComponent('Medical Centers Found')}&summary=${encodeURIComponent('Here are the nearest hospitals and clinics to your current location.')}&hospitals=${encodeURIComponent(JSON.stringify(data.hospitals))}`;
+        } catch(e) { console.error(e); }
+      }, (err) => alert('Geolocation error: ' + err.message));
+    }
+
+    async function triggerRealSOS() {
+      if (!('geolocation' in navigator)) return alert('Geolocation not supported.');
+      document.getElementById('demo-user-text').innerText = 'Fetching location & notifying contacts...';
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        const lat = pos.coords.latitude, lng = pos.coords.longitude;
+        try {
+          const res = await fetch('/api/sos', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ lat, lng })
+          });
+          const data = await res.json();
+          
+          let smsParam = '';
+          if (data.phones && data.phones.length > 0) {
+            const message = `EMERGENCY SOS! I need help immediately. Location: https://maps.google.com/?q=${lat},${lng}`;
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            const separator = isIOS ? '&' : '?';
+            const smsLink = `sms:${data.phones.join(',')}${separator}body=${encodeURIComponent(message)}`;
+            smsParam = `&sms_link=${encodeURIComponent(smsLink)}`;
+          }
+          
+          window.location.href = `/results?risk_level=High&action=${encodeURIComponent(data.action)}&summary=${encodeURIComponent(data.message)}&amma_status=${encodeURIComponent(data.amma_status)}&hospitals=${encodeURIComponent(JSON.stringify(data.hospitals))}${smsParam}`;
+        } catch(e) { console.error(e); }
+      }, (err) => alert('Geolocation error: ' + err.message));
+    }
+
+    // ══════════════════════════════
+    //  CAMERA CAPTURE
+    // ══════════════════════════════
+    let cameraStream = null;
+
+    async function openCamera() {
+      const modal = document.getElementById('camera-modal');
+      const video = document.getElementById('camera-preview');
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'environment' }, 
+          audio: false 
+        });
+        video.srcObject = cameraStream;
+        modal.classList.add('active');
+      } catch (e) {
+        alert('Camera access denied or not available.');
+        console.error(e);
+      }
+    }
+
+    function closeCamera() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+      }
+      document.getElementById('camera-modal').classList.remove('active');
+    }
+
+    async function capturePhoto() {
+      const video = document.getElementById('camera-preview');
+      const canvas = document.getElementById('camera-canvas');
+      const context = canvas.getContext('2d');
+      
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      canvas.toBlob(async (blob) => {
+        closeCamera();
+        document.getElementById('demo-user-text').innerText = 'Analyzing captured image...';
+        const formData = new FormData();
+        formData.append('report', blob, 'camera_capture.jpg');
+        try {
+          const response = await fetch('/api/upload_report', { method: 'POST', body: formData });
+          const data = await response.json();
+          window.location.href = `/results?risk_level=${encodeURIComponent(data.risk_level)}&action=${encodeURIComponent(data.action)}&summary=${encodeURIComponent(data.summary)}&ml_confidence=${data.ml_confidence || ''}`;
+        } catch(e) {
+          alert('Error analyzing captured image.');
+          document.getElementById('demo-user-text').innerText = '';
+        }
+      }, 'image/jpeg', 0.9);
+    }
+  </script>
+
+  <!-- Google Translate (hidden) -->
+  <div id="google_translate_element" style="display:none;"></div>
+  <script>
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({pageLanguage:'en', autoDisplay:false}, 'google_translate_element');
+    }
+  </script>
+  <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+</body>
+</html>

@@ -1,0 +1,230 @@
+/* CSS Reset & Variables */
+:root {
+  --bg: #0B0C10; /* Deep Dark */
+  --text: #F8F9FA;
+  --primary: #E63946; /* Emergency Red */
+  --primary-glow: rgba(230, 57, 70, 0.6);
+  --secondary: #1D3557; /* Trust Blue */
+  --accent: #457B9D;
+  --glass: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --font-main: 'Outfit', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+h1, h2, h3, h4, h5, h6, .title {
+  font-family: var(--font-main);
+}
+
+/* Common Utility */
+.container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+.section { padding: 8rem 0; position: relative; }
+.text-center { text-align: center; }
+.title { font-size: 3.5rem; font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -0.5px; }
+.subtitle { font-size: 1.25rem; color: #9CA3AF; margin-bottom: 4rem; max-width: 600px; margin-inline: auto; }
+
+/* Heartbeat Animation Background */
+.heartbeat-bg {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: 
+    radial-gradient(circle at center, rgba(29, 53, 87, 0.4) 0%, transparent 60%),
+    url('data:image/svg+xml;utf8,<svg width="1000" height="200" viewBox="0 0 1000 200" xmlns="http://www.w3.org/2000/svg"><path d="M0,100 L200,100 L250,50 L300,150 L350,20 L400,180 L450,100 L1000,100" fill="none" stroke="rgba(230,57,70,0.15)" stroke-width="3" filter="drop-shadow(0 0 5px rgba(230,57,70,0.4))"/></svg>');
+  background-size: 100% 100%, 1000px 200px;
+  background-position: center, center;
+  background-repeat: no-repeat, repeat-x;
+  animation: pulse-bg 3s infinite ease-in-out, scroll-bg 15s linear infinite;
+  z-index: 0;
+  pointer-events: none;
+}
+@keyframes pulse-bg {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+@keyframes scroll-bg {
+  from { background-position: center, 0 center; }
+  to { background-position: center, -1000px center; }
+}
+
+/* 1. Hero Section */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero-content {
+  z-index: 2;
+  animation: fadeUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+  transform: translateY(30px);
+}
+.hero h1 {
+  font-size: 5rem;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+  color: #fff;
+  letter-spacing: -1.5px;
+  text-shadow: 0 0 40px rgba(230,57,70,0.3);
+}
+.hero h1 span {
+  background: linear-gradient(135deg, #fff 0%, #ffb3b3 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.hero p {
+  font-size: 1.8rem;
+  font-weight: 400;
+  color: #D1D5DB;
+  margin-bottom: 3.5rem;
+  font-family: var(--font-main);
+}
+.cta-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 3rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  font-family: var(--font-main);
+  color: #fff;
+  background: var(--primary);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 50px;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 10px 30px var(--primary-glow), inset 0 1px 0 rgba(255,255,255,0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.5px;
+}
+.cta-button:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 20px 40px var(--primary-glow), inset 0 1px 0 rgba(255,255,255,0.3);
+  background: #f84654;
+}
+.cta-button i { font-size: 1.2rem; }
+
+@keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+/* Glass Card Base */
+.card {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 24px;
+  padding: 2.5rem;
+  transition: all 0.4s ease;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+.card:hover { 
+  transform: translateY(-8px); 
+  border-color: rgba(255,255,255,0.2); 
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  background: rgba(255,255,255,0.05);
+}
+
+/* 2. Problem Section */
+.problem-section { background: linear-gradient(to bottom, var(--bg), #0f131a); }
+.problem-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+  margin-bottom: 4rem;
+}
+.problem-card h3 { 
+  font-size: 1.5rem; 
+  margin-bottom: 1rem; 
+  display: flex; 
+  align-items: center; 
+  gap: 1rem; 
+  color: #fff;
+}
+.problem-card p { color: #9CA3AF; }
+
+.problem-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+  background: rgba(230, 57, 70, 0.03);
+  border: 1px solid rgba(230, 57, 70, 0.15);
+  padding: 3rem;
+  border-radius: 24px;
+  margin-bottom: 2rem;
+  box-shadow: inset 0 0 40px rgba(0,0,0,0.2);
+}
+.stat-item { text-align: center; }
+.stat-val { font-size: 3.5rem; font-weight: 800; color: var(--primary); font-family: var(--font-main); line-height: 1; margin-bottom: 0.5rem; }
+.stat-label { font-size: 1rem; color: #9CA3AF; text-transform: uppercase; letter-spacing: 1px; font-weight: 500; }
+
+.problem-note {
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #ffb3b3;
+  padding: 1.5rem;
+  border-left: 4px solid var(--primary);
+  background: linear-gradient(90deg, rgba(230, 57, 70, 0.1), transparent);
+  border-radius: 0 16px 16px 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0 auto;
+  max-width: fit-content;
+}
+
+/* Circle of Trust Specific */
+.trust-card {
+  background: rgba(11, 12, 16, 0.8);
+  max-width: 600px;
+  margin: 0 auto;
+}
+.trust-input {
+  flex: 1; padding: 1rem; border-radius: 12px; background: rgba(255,255,255,0.05); 
+  border: 1px solid rgba(255,255,255,0.1); color: white;
+  font-family: var(--font-body); outline: none;
+}
+.trust-input:focus { border-color: var(--primary); }
+
+/* Demo Button overrides */
+.demo-btn {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #E5E7EB;
+  padding: 0.8rem 1.5rem; border-radius: 50px; cursor: pointer;
+  font-weight: 500; font-family: var(--font-body); transition: all 0.3s ease;
+  display: inline-flex; align-items: center; gap: 0.5rem;
+}
+.demo-btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); transform: translateY(-2px); }
+.demo-btn.primary { background: rgba(69, 123, 157, 0.2); border-color: rgba(69, 123, 157, 0.5); color: #fff; }
+.demo-btn.primary:hover { background: rgba(69, 123, 157, 0.4); }
+
+/* Risk Bar */
+.risk-bar { width: 100%; height: 6px; background: #374151; border-radius: 10px; margin-top: 12px; overflow: hidden; display: flex; }
+.risk-low { width: 33.3%; background: var(--success); }
+.risk-mod { width: 33.3%; background: var(--warning); }
+.risk-high { width: 33.4%; background: var(--danger); }
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .hero h1 { font-size: 3.5rem; }
+  .hero p { font-size: 1.25rem; }
+  .title { font-size: 2.5rem; }
+}
