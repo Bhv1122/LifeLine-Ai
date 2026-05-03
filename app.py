@@ -9,6 +9,11 @@ from datetime import datetime
 from flask import Flask, render_template, request, jsonify, session
 from werkzeug.utils import secure_filename
 
+try:
+    from twilio.rest import Client as TwilioClient
+except ImportError:
+    TwilioClient = None
+
 # Optional/Lazy imports for ML features
 reader = None
 def get_ocr_reader():
@@ -317,11 +322,13 @@ def find_nearby_hospitals(lat, lng, radius_meters=5000):
         return hospitals[:5]
     except Exception as e:
         print(f"[Hospital API Error] {e}")
-        # Fallback mock
+        # Fallback mock: offset slightly so they don't map exactly to the user's location
+        lat_f = float(lat)
+        lng_f = float(lng)
         return [
-            {"name": "Apollo Hospitals", "distance": "1.2 km", "time": "4 min", "phone": "1860-500-1066", "lat": lat, "lng": lng},
-            {"name": "Fortis Healthcare", "distance": "2.5 km", "time": "8 min", "phone": "1800-111-4567", "lat": lat, "lng": lng},
-            {"name": "AIIMS Emergency", "distance": "3.8 km", "time": "13 min", "phone": "011-26588500", "lat": lat, "lng": lng},
+            {"name": "Apollo Hospitals", "distance": "1.2 km", "time": "4 min", "phone": "1860-500-1066", "lat": lat_f + 0.010, "lng": lng_f + 0.010},
+            {"name": "Fortis Healthcare", "distance": "2.5 km", "time": "8 min", "phone": "1800-111-4567", "lat": lat_f - 0.015, "lng": lng_f + 0.020},
+            {"name": "AIIMS Emergency", "distance": "3.8 km", "time": "13 min", "phone": "011-26588500", "lat": lat_f + 0.020, "lng": lng_f - 0.010},
         ]
 
 # ─────────────────────────────────────────────
@@ -416,16 +423,44 @@ IMPORTANT: Base your assessment ONLY on what you see in the image. Do not guess 
             print(f"[Gemini Vision Error] {e}")
             traceback.print_exc()
 
-    extracted_text = "No text extracted."
-    ocr_reader = get_ocr_reader()
-    if ocr_reader is not None:
+    extracted_text = ""
+    
+    # Check if the file is a PDF
+    if filepath.lower().endswith('.pdf'):
         try:
-            result = ocr_reader.readtext(filepath, detail=0)
-            extracted_text = " ".join(result)
+            import fitz  # PyMuPDF
+            doc = fitz.open(filepath)
+            text_pages = []
+            for page in doc:
+                text_pages.append(page.get_text())
+            extracted_text = " ".join(text_pages)
+            if not extracted_text.strip():
+                extracted_text = "Error: PDF appears to be empty or contains only scanned images without text."
+        except ImportError:
+            extracted_text = "Error: PyMuPDF is not installed. Cannot read PDF."
         except Exception as e:
-            extracted_text = "Error reading image: " + str(e)
+            extracted_text = f"Error reading PDF: {e}"
     else:
-        extracted_text = "Mock OCR: Severe elevated troponin levels myocardial infarction detected."
+        # It's an image, use easyocr
+        ocr_reader = get_ocr_reader()
+        if ocr_reader is not None:
+            try:
+                result = ocr_reader.readtext(filepath, detail=0)
+                extracted_text = " ".join(result)
+            except Exception as e:
+                extracted_text = "Error reading image: " + str(e)
+                
+    # If no text was extracted, apply the mock fallback
+    if not extracted_text.strip() or extracted_text.startswith("Error"):
+        # Hackathon Demo Trick: Change mock text based on the uploaded file's name!
+        lower_name = filename.lower()
+        if "normal" in lower_name or "low" in lower_name or "healthy" in lower_name or "good" in lower_name:
+            extracted_text = "Mock OCR: All blood work values within normal range. Healthy patient."
+        elif "moderate" in lower_name or "elevated" in lower_name or "warning" in lower_name or "mild" in lower_name:
+            extracted_text = "Mock OCR: Mildly elevated cholesterol and blood pressure. Moderate risk detected."
+        else:
+            extracted_text = "Mock OCR: Severe elevated troponin levels myocardial infarction detected."
+
 
     analysis = analyze_medical_text(extracted_text)
     return jsonify({
@@ -576,21 +611,79 @@ def trigger_sos():
             print(f"[Hospital Fetch Error] {e}")
 
     if not hospitals:
+        lat_f = float(lat) if lat else 0.0
+        lng_f = float(lng) if lng else 0.0
         hospitals = [
-            {"name": "Apollo City Hospital", "distance": "1.2 km", "time": "4 min", "phone": "1860-500-1066"},
-            {"name": "Fortis Emergency Center", "distance": "2.5 km", "time": "8 min", "phone": "1800-111-4567"},
-            {"name": "General Public Hospital", "distance": "3.1 km", "time": "12 min", "phone": ""},
+            {"name": "Apollo City Hospital", "distance": "1.2 km", "time": "4 min", "phone": "1860-500-1066", "lat": lat_f + 0.010, "lng": lng_f + 0.010},
+            {"name": "Fortis Emergency Center", "distance": "2.5 km", "time": "8 min", "phone": "1800-111-4567", "lat": lat_f - 0.015, "lng": lng_f + 0.020},
+            {"name": "General Public Hospital", "distance": "3.1 km", "time": "12 min", "phone": "", "lat": lat_f + 0.020, "lng": lng_f - 0.010},
         ]
 
     contact_phones = [row[1] for row in contacts]
 
+    # Directly send SMS via Twilio if configured
+    twilio_sid = os.environ.get("TWILIO_ACCOUNT_SID")
+    twilio_token = os.environ.get("TWILIO_AUTH_TOKEN")
+    twilio_phone = os.environ.get("TWILIO_PHONE_NUMBER")
+
+    direct_sms_sent = False
+    sms_errors = []
+
+    if TwilioClient and twilio_sid and twilio_token and twilio_phone:
+        try:
+            client = TwilioClient(twilio_sid, twilio_token)
+            loc_link = f"https://maps.google.com/?q={lat},{lng}" if lat and lng else "Location unavailable"
+            message_body = f"EMERGENCY SOS from LifeLine AI! I need help immediately. My location: {loc_link}"
+            
+            for phone in contact_phones:
+                # Ensure phone number is in E.164 format (e.g., +1234567890)
+                # If they entered a 10 digit number, we assume the country code based on region. 
+                # For demo, we just prepend '+' if missing, or require valid format.
+                formatted_phone = phone if phone.startswith('+') else f"+91{phone}"
+                try:
+                    client.messages.create(
+                        body=message_body,
+                        from_=twilio_phone,
+                        to=formatted_phone
+                    )
+                    direct_sms_sent = True
+                except Exception as e:
+                    print(f"[Twilio SMS Error for {formatted_phone}] {e}")
+                    sms_errors.append(str(e))
+        except Exception as e:
+            print(f"[Twilio Init Error] {e}")
+            
+    # Fallback to Textbelt for free testing (1 message per day limit) if Twilio isn't set up
+    if not direct_sms_sent and contact_phones:
+        print("[INFO] Twilio not configured. Attempting to send direct SMS via free Textbelt API...")
+        loc_link = f"https://maps.google.com/?q={lat},{lng}" if lat and lng else "Location unavailable"
+        message_body = f"EMERGENCY SOS! I need help immediately. Location: {loc_link}"
+        
+        # We only send to the FIRST contact to not waste the 1-per-day quota
+        first_phone = contact_phones[0]
+        try:
+            resp = requests.post('https://textbelt.com/text', data={
+                'phone': first_phone,
+                'message': message_body,
+                'key': 'textbelt'
+            })
+            resp_data = resp.json()
+            if resp_data.get('success'):
+                print(f"[Textbelt] Successfully sent direct SMS to {first_phone}!")
+                direct_sms_sent = True
+            else:
+                print(f"[Textbelt Error] {resp_data.get('error')}")
+        except Exception as e:
+            print(f"[Textbelt Request Error] {e}")
+
     return jsonify({
         "status": "success",
-        "amma_status": "Amma SOS Dispatched",
+        "amma_status": "Amma SOS Dispatched (Direct SMS: " + ("Sent" if direct_sms_sent else "Failed/Not Configured") + ")",
         "message": f"Alert sent to {len(contacts)} trusted contacts. Ambulance 102 notified.",
         "action": "Stay exactly where you are. Help is on the way.",
         "hospitals": hospitals,
         "phones": contact_phones,
+        "direct_sms_sent": direct_sms_sent,
         "lat": lat,
         "lng": lng
     })

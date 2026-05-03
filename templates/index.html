@@ -478,7 +478,7 @@
           const data = await res.json();
           
           let smsParam = '';
-          if (data.phones && data.phones.length > 0) {
+          if (data.phones && data.phones.length > 0 && !data.direct_sms_sent) {
             const message = `EMERGENCY SOS! I need help immediately. Location: https://maps.google.com/?q=${lat},${lng}`;
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
             const separator = isIOS ? '&' : '?';

@@ -197,7 +197,7 @@
           <p>{{ h.distance }} &middot; ~{{ h.time }}</p>
           <div class="hospital-links">
             {% if h.phone %}<a href="tel:{{ h.phone }}" class="call-link"><i class="fa-solid fa-phone"></i> {{ h.phone }}</a>{% endif %}
-            {% if h.lat and h.lng %}<a href="https://www.google.com/maps/search/?api=1&query={{ h.lat }},{{ h.lng }}" target="_blank"><i class="fa-solid fa-map"></i> Map</a>{% endif %}
+            {% if h.lat and h.lng %}<a href="https://www.google.com/maps/dir/?api=1&destination={{ h.lat }},{{ h.lng }}" target="_blank"><i class="fa-solid fa-map"></i> Directions</a>{% endif %}
           </div>
         </div>
         {% endfor %}

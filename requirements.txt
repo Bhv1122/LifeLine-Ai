@@ -5,3 +5,4 @@ numpy
 google-genai
 pillow
 gunicorn
+twilio
