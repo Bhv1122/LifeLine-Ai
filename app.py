@@ -273,8 +273,8 @@ def analyze_medical_text(text):
                     elif highest_risk_found == "Moderate" and level == "High":
                         highest_risk_found = "High"
 
-        # If this is purely a heuristic run, override the default "Low" risk level
-        if result["source"] == "heuristic" and found_terms:
+        # If this is purely a heuristic run, or if the JSON DB found specific terms, override the default
+        if found_terms:
             result["risk_level"] = highest_risk_found
 
         # Build a text-aware summary

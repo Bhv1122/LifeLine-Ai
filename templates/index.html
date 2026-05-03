@@ -113,10 +113,23 @@
         <p class="card-desc" style="max-width:500px; margin:0 auto;">Trigger an immediate SOS alert — notifies your trusted contacts and finds nearby hospitals in real-time.</p>
       </div>
 
-      <div style="text-align:center; margin-bottom:3rem;">
+      <div style="text-align:center; margin-bottom:3rem; display:flex; flex-direction:column; align-items:center; gap:1.5rem;">
         <button class="btn btn-danger sos-btn" onclick="triggerRealSOS()">
           <i class="fa-solid fa-truck-medical"></i> Trigger SOS
         </button>
+        
+        <div style="background:rgba(0,0,0,0.2); padding:1.25rem; border-radius:var(--radius-md); border:1px solid var(--glass-border); max-width:400px; width:100%;">
+          <h3 style="font-size:1.1rem; color:#fff; margin-bottom:0.5rem;"><i class="fa-solid fa-ear-listen" style="color:var(--accent);"></i> Hands-Free SOS</h3>
+          <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:1rem;">
+            Runs silently in the background. Say <strong style="color:var(--danger);">"Help LifeLine"</strong> to auto-trigger SOS without touching your phone.
+          </p>
+          <button class="btn btn-ghost btn-sm" id="wake-btn" onclick="toggleWakeWord()" style="width:100%;">
+            <i class="fa-solid fa-microphone-slash"></i> Enable Wake Word
+          </button>
+          <div id="wake-word-status" style="font-size:0.8rem; color:var(--success); margin-top:0.75rem; font-weight:600; display:none;">
+            <i class="fa-solid fa-circle-dot fa-fade"></i> Listening for "Help LifeLine"...
+          </div>
+        </div>
       </div>
 
       <!-- Circle of Trust -->
@@ -543,6 +556,82 @@
           document.getElementById('demo-user-text').innerText = '';
         }
       }, 'image/jpeg', 0.9);
+    }
+
+    // ══════════════════════════════
+    //  WAKE WORD (HANDS-FREE SOS)
+    // ══════════════════════════════
+    let wakeRecognition = null;
+    let isWakeListening = false;
+
+    function toggleWakeWord() {
+      const btn = document.getElementById('wake-btn');
+      const status = document.getElementById('wake-word-status');
+
+      if (isWakeListening) {
+        if (wakeRecognition) wakeRecognition.stop();
+        isWakeListening = false;
+        btn.innerHTML = '<i class="fa-solid fa-microphone-slash"></i> Enable Wake Word';
+        status.style.display = 'none';
+        return;
+      }
+
+      if (!SpeechRecognition) {
+        alert('Speech Recognition not supported in this browser. Please use Chrome.');
+        return;
+      }
+
+      if (!wakeRecognition) {
+        wakeRecognition = new SpeechRecognition();
+        wakeRecognition.continuous = true;
+        wakeRecognition.interimResults = true;
+        wakeRecognition.lang = document.getElementById('app-lang').value || 'en-US';
+
+        wakeRecognition.onresult = function(event) {
+          let interim = '', final = '';
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            if (event.results[i].isFinal) final += event.results[i][0].transcript.toLowerCase();
+            else interim += event.results[i][0].transcript.toLowerCase();
+          }
+          
+          const text = final + ' ' + interim;
+          if (text.includes('help lifeline') || text.includes('help life line')) {
+            console.log('[Wake Word] Detected!', text);
+            wakeRecognition.stop();
+            isWakeListening = false;
+            btn.innerHTML = '<i class="fa-solid fa-microphone-slash"></i> Enable Wake Word';
+            status.style.display = 'none';
+            document.getElementById('demo-user-text').innerText = 'Wake word detected! Triggering SOS...';
+            triggerRealSOS();
+          }
+        };
+
+        wakeRecognition.onend = function() {
+          // Auto-restart if it was stopped by the browser and user still wants it enabled
+          if (isWakeListening) {
+            try { wakeRecognition.start(); } catch(e) {}
+          }
+        };
+
+        wakeRecognition.onerror = function(event) {
+          console.error('[Wake Word Error]', event.error);
+          if (event.error === 'not-allowed') {
+            isWakeListening = false;
+            btn.innerHTML = '<i class="fa-solid fa-microphone-slash"></i> Enable Wake Word';
+            status.style.display = 'none';
+            alert('Microphone permission denied.');
+          }
+        };
+      }
+
+      try {
+        wakeRecognition.start();
+        isWakeListening = true;
+        btn.innerHTML = '<i class="fa-solid fa-microphone" style="color:var(--danger);"></i> Disable Wake Word';
+        status.style.display = 'block';
+      } catch(e) {
+        console.error(e);
+      }
     }
   </script>
 
