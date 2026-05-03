@@ -1,18 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% extends 'base.html' %}
+{% block head %}
   <title>LifeLine AI — Emergency Results</title>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-  <script type="text/javascript">
-    function googleTranslateElementInit() {
-      new google.translate.TranslateElement({pageLanguage:'en', autoDisplay:false}, 'google_translate_element');
-    }
-  </script>
-  <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
   <style>
     body {
       display: flex;
@@ -158,9 +146,8 @@
       gap: 0.5rem;
     }
     .hospitals-title i { color: var(--accent); }
-  </style>
-</head>
-<body>
+{% endblock %}
+{% block body %}
 
   <div class="mesh-bg"></div>
   <div class="particles">
@@ -171,7 +158,7 @@
   <div class="results-wrapper">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
       <a href="/" class="back-link" style="margin-bottom:0;"><i class="fa-solid fa-arrow-left"></i> Return Home</a>
-      <select id="results-lang" onchange="changeResultsLanguage(this)" class="lang-select" title="Page Language">
+      <select id="results-lang" data-lang-selector class="lang-select" title="Page Language">
         <option value="en" data-translate="en">🌐 English</option>
         <option value="hi" data-translate="hi">🌐 Hindi</option>
         <option value="kn" data-translate="kn">🌐 Kannada</option>
@@ -239,54 +226,16 @@
     </div>
   </div>
 
-  <!-- Google Translate hidden element -->
-  <div id="google_translate_element" style="display:none;"></div>
-
   <script>
-    // Auto-read the action aloud and attempt to auto-open SMS
     window.onload = () => {
       if ('speechSynthesis' in window) {
         const u = new SpeechSynthesisUtterance("{{ action }}");
         window.speechSynthesis.speak(u);
       }
-
       const smsLink = "{{ sms_link|safe }}";
       if (smsLink) {
-        setTimeout(() => {
-          window.location.href = smsLink;
-        }, 1000);
+        setTimeout(() => { window.location.href = smsLink; }, 1000);
       }
     };
-
-    // Restore the language selector to match the current googtrans cookie
-    (function restoreLang() {
-      const match = document.cookie.match(/googtrans=\/en\/([^;]+)/);
-      if (match) {
-        const code = match[1];
-        const sel = document.getElementById('results-lang');
-        for (let i = 0; i < sel.options.length; i++) {
-          if (sel.options[i].getAttribute('data-translate') === code) {
-            sel.selectedIndex = i;
-            break;
-          }
-        }
-      }
-    })();
-
-    function changeResultsLanguage(sel) {
-      const code = sel.options[sel.selectedIndex].getAttribute('data-translate');
-      function setCookie(n, v) {
-        document.cookie = n + '=' + v + '; path=/';
-        document.cookie = n + '=' + v + '; path=/; domain=.' + window.location.hostname;
-      }
-      if (code === 'en') {
-        document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
-        document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.' + window.location.hostname;
-      } else {
-        setCookie('googtrans', '/en/' + code);
-      }
-      window.location.reload();
-    }
   </script>
-</body>
-</html>
+{% endblock %}

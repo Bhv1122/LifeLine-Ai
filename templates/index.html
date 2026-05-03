@@ -1,15 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% extends 'base.html' %}
+{% block head %}
   <title>LifeLine AI — Act fast. Stay safe.</title>
   <meta name="description" content="LifeLine AI: An emergency decision engine that uses ML and AI to analyze medical symptoms, reports, and trigger SOS in critical moments.">
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
+{% endblock %}
+{% block body %}
+
 
   <!-- Ambient backgrounds -->
   <div class="mesh-bg"></div>
@@ -24,7 +19,7 @@
       <span class="pulse-dot"></span> LifeLine AI
     </a>
     <div class="nav-right">
-      <select id="app-lang" onchange="changeLanguage(this)" class="lang-select" title="App Language">
+      <select id="app-lang" data-lang-selector class="lang-select" title="App Language">
         <option value="en-US" data-translate="en">🌐 English</option>
         <option value="hi-IN" data-translate="hi">🌐 Hindi</option>
         <option value="kn-IN" data-translate="kn">🌐 Kannada</option>
@@ -545,15 +540,4 @@
       }, 'image/jpeg', 0.9);
     }
   </script>
-
-  <!-- Google Translate (hidden) -->
-  <div id="google_translate_element" style="display:none;"></div>
-  <script>
-    function googleTranslateElementInit() {
-      new google.translate.TranslateElement({pageLanguage:'en', autoDisplay:false}, 'google_translate_element');
-    }
-  </script>
-  <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-
-</body>
-</html>
+{% endblock %}
