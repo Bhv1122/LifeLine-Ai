@@ -7,3 +7,5 @@ pillow
 gunicorn
 twilio
 python-dotenv
+easyocr
+pymupdf

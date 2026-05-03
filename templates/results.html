@@ -246,11 +246,11 @@
     // Auto-read the action aloud and attempt to auto-open SMS
     window.onload = () => {
       if ('speechSynthesis' in window) {
-        const u = new SpeechSynthesisUtterance("{{ action }}");
+        const u = new SpeechSynthesisUtterance({{ action|tojson|safe }});
         window.speechSynthesis.speak(u);
       }
 
-      const smsLink = "{{ sms_link|safe }}";
+      const smsLink = {{ sms_link|tojson|safe }};
       if (smsLink) {
         setTimeout(() => {
           window.location.href = smsLink;
