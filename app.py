@@ -9,6 +9,13 @@ from datetime import datetime
 from flask import Flask, render_template, request, jsonify, session
 from werkzeug.utils import secure_filename
 
+# Load .env file for local development (safe — .env is git-ignored)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # python-dotenv not installed, rely on system env vars
+
 try:
     from twilio.rest import Client as TwilioClient
 except ImportError:

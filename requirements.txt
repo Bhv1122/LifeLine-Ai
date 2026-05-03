@@ -6,3 +6,4 @@ google-genai
 pillow
 gunicorn
 twilio
+python-dotenv
