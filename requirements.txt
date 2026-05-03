@@ -1,0 +1,7 @@
+Flask
+requests
+scikit-learn
+numpy
+google-genai
+pillow
+gunicorn
