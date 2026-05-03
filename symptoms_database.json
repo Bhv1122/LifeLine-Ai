@@ -1,0 +1,52 @@
+{
+  "High": [
+    "troponin", "infarction", "stroke", "hemorrhage", "seizure", "unconscious",
+    "anaphylactic", "cardiac arrest", "respiratory failure", "critical",
+    "emergency", "severe", "unresponsive", "no pulse", "bleeding",
+    "aneurysm", "pulmonary embolism", "sepsis", "shock", "coma",
+    "choking", "cyanosis", "chest pain", "crushing pain", "radiating pain",
+    "sudden numbness", "facial drooping", "slurred speech", "loss of vision",
+    "status epilepticus", "hypoglycemia", "diabetic ketoacidosis", "dka",
+    "hypoxia", "asphyxia", "stridor", "airway obstruction", "profuse sweating",
+    "systolic > 180", "diastolic > 120", "hypertensive crisis", "hemoptysis",
+    "ventricular fibrillation", "v-fib", "asystole", "pulseless", "massive bleeding",
+    "arterial bleed", "gunshot wound", "stab wound", "severe burn", "third degree burn",
+    "spinal injury", "paralysis", "loss of consciousness", "fainting with chest pain",
+    "acute myocardial infarction", "stemi", "nstemi", "cardiac ischemia",
+    "cerebral hemorrhage", "subarachnoid hemorrhage", "meningitis", "encephalitis",
+    "acute kidney injury", "aki", "liver failure", "acute abdomen", "peritonitis",
+    "ruptured appendix", "ectopic pregnancy", "suicidal ideation", "overdose"
+  ],
+  "Moderate": [
+    "elevated", "borderline", "hypertension", "anemia", "thyroid",
+    "cholesterol", "diabetes", "inflammation", "creatinine", "palpitations",
+    "fracture", "dislocation", "concussion", "dizziness", "vertigo",
+    "asthma attack", "wheezing", "moderate pain", "fever > 102", "dehydration",
+    "abdominal pain", "vomiting", "diarrhea", "migraine", "tachycardia",
+    "arrhythmia", "hyperglycemia", "kidney stone", "gallstone", "appendicitis",
+    "ulcer", "angina", "syncope", "fainting", "lethargy", "confusion",
+    "swelling", "edema", "rash", "hives", "sprain", "strain",
+    "bronchitis", "pneumonia", "shortness of breath", "persistent cough",
+    "blood in stool", "hematuria", "blood in urine", "severe back pain",
+    "sciatica", "gout attack", "cellulitis", "skin infection", "shingles",
+    "urinary tract infection", "uti", "pelvic pain", "ovarian cyst",
+    "laceration", "deep cut", "animal bite", "allergic reaction", "mild swelling",
+    "joint effusion", "torn ligament", "meniscus tear", "food poisoning"
+  ],
+  "Low": [
+    "normal", "healthy", "routine", "stable", "within range", "negative",
+    "no abnormalities", "good", "clear", "mild", "slight",
+    "common cold", "cough", "runny nose", "sore throat", "minor cut",
+    "scrape", "bruise", "mild headache", "muscle ache", "fatigue",
+    "heartburn", "indigestion", "acid reflux", "allergies", "seasonal",
+    "minor burn", "first degree burn", "mild fever", "cramp", "insomnia",
+    "dry skin", "eczema", "vitamin deficiency", "supplement", "checkup",
+    "preventative", "benign", "unremarkable", "satisfactory",
+    "nasal congestion", "sneezing", "postnasal drip", "mild eye irritation",
+    "pink eye", "conjunctivitis", "earache", "wax buildup", "toothache",
+    "cavity", "gingivitis", "cancre sore", "cold sore", "chapped lips",
+    "dandruff", "mild acne", "blackhead", "pimple", "mild sunburn",
+    "paper cut", "splinter", "blister", "callus", "corn",
+    "mild flatulence", "bloating", "mild constipation", "tension headache"
+  ]
+}

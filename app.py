@@ -94,6 +94,12 @@ TRAINING_DATA = [
     ("seizure epilepsy convulsion status epilepticus", "High"),
     ("glucose level 40 hypoglycemia diabetic emergency", "High"),
     ("oxygen saturation 85 percent respiratory failure", "High"),
+    ("stemi acute myocardial infarction critical", "High"),
+    ("gunshot wound massive arterial bleeding", "High"),
+    ("patient is turning blue cyanosis choking", "High"),
+    ("sudden loss of vision severe headache subarachnoid", "High"),
+    ("third degree burns covering 30 percent body", "High"),
+
     ("borderline diabetes elevated sugar levels fasting glucose 120", "Moderate"),
     ("mildly elevated blood pressure 140 over 90 hypertension stage 1", "Moderate"),
     ("elevated cholesterol LDL 190 mg/dL borderline high", "Moderate"),
@@ -104,6 +110,12 @@ TRAINING_DATA = [
     ("pain in joints mild arthritis inflammation", "Moderate"),
     ("liver enzymes slightly elevated SGPT 60", "Moderate"),
     ("dizzy spells occasional headache tension", "Moderate"),
+    ("asthma attack wheezing shortness of breath", "Moderate"),
+    ("severe abdominal pain vomiting suspected appendicitis", "Moderate"),
+    ("migraine headache aura sensitivity to light", "Moderate"),
+    ("deep cut laceration requiring stitches", "Moderate"),
+    ("sprained ankle swelling pain upon walking", "Moderate"),
+
     ("normal blood work all values within range healthy", "Low"),
     ("routine checkup no abnormalities found", "Low"),
     ("blood pressure 118 over 76 normal healthy", "Low"),
@@ -114,6 +126,11 @@ TRAINING_DATA = [
     ("mild fatigue adequate sleep recommended", "Low"),
     ("hemoglobin 14 normal red blood cells healthy", "Low"),
     ("ECG normal sinus rhythm no arrhythmia detected", "Low"),
+    ("common cold mild cough runny nose", "Low"),
+    ("minor paper cut scrape bleeding stopped", "Low"),
+    ("mild indigestion heartburn after eating", "Low"),
+    ("seasonal allergies sneezing watery eyes", "Low"),
+    ("tension headache resolved with ibuprofen", "Low")
 ]
 
 MODEL_PATH = 'ml_model.pkl'
@@ -234,24 +251,48 @@ def analyze_medical_text(text):
         except Exception as e:
             print(f"[Gemini Error] {e}")
 
+    # --- ACTIVE LEARNING: Auto-Train ML model ---
+    if result["source"] in ("gemini", "heuristic") and ML_AVAILABLE:
+        new_label = result.get("risk_level")
+        if new_label in ("High", "Moderate", "Low") and len(text.split()) > 3:
+            global ml_model
+            TRAINING_DATA.append((text, new_label))
+            ml_model = train_risk_model()
+            print(f"[INFO] Active Learning: ML model retrained with new {result['source']} sample -> {new_label}")
+
     # --- Step 4: Heuristic fallback for summary/action ---
     if result["source"] in ("ml_model", "heuristic"):
         text_lower = text.lower()
-        # Extract key terms found in the text for context-specific summaries
+        
+        # Load the comprehensive symptoms database
+        markers = {}
+        try:
+            with open("symptoms_database.json", "r") as f:
+                markers = json.load(f)
+        except Exception:
+            # Fallback if file is missing
+            markers = {
+                'High': ['troponin', 'infarction', 'stroke', 'hemorrhage', 'seizure', 'critical'],
+                'Moderate': ['elevated', 'hypertension', 'anemia', 'thyroid', 'cholesterol'],
+                'Low': ['normal', 'healthy', 'stable', 'within range']
+            }
+
         found_terms = []
-        markers = {
-            'High': ['troponin', 'infarction', 'stroke', 'hemorrhage', 'seizure', 'unconscious',
-                     'anaphylactic', 'cardiac arrest', 'respiratory failure', 'critical',
-                     'emergency', 'severe', 'unresponsive', 'no pulse', 'bleeding'],
-            'Moderate': ['elevated', 'borderline', 'hypertension', 'anemia', 'thyroid',
-                         'cholesterol', 'diabetes', 'inflammation', 'creatinine', 'palpitations'],
-            'Low': ['normal', 'healthy', 'routine', 'stable', 'within range', 'negative',
-                    'no abnormalities', 'good', 'clear']
-        }
-        for level, terms in markers.items():
-            for term in terms:
+        highest_risk_found = "Low"
+        
+        # We check High first, then Moderate, then Low
+        for level in ['High', 'Moderate', 'Low']:
+            for term in markers.get(level, []):
                 if term in text_lower:
                     found_terms.append(term)
+                    if highest_risk_found == "Low" and level != "Low":
+                        highest_risk_found = level
+                    elif highest_risk_found == "Moderate" and level == "High":
+                        highest_risk_found = "High"
+
+        # If this is purely a heuristic run, override the default "Low" risk level
+        if result["source"] == "heuristic" and found_terms:
+            result["risk_level"] = highest_risk_found
 
         # Build a text-aware summary
         terms_str = ', '.join(found_terms[:4]) if found_terms else 'general symptoms'
@@ -396,6 +437,7 @@ Instructions:
 
 Output ONLY a valid JSON object with these exact keys:
 {
+  "extracted_text": "The full exact text read from the image",
   "risk_level": "Low" or "Moderate" or "High",
   "summary": "Plain English explanation of key findings (2-3 sentences, no medical jargon)",
   "immediate_action": "ONE specific action the patient should take (max 15 words)"
@@ -410,10 +452,20 @@ IMPORTANT: Base your assessment ONLY on what you see in the image. Do not guess 
             print(f"[Gemini Vision Raw] {raw_text[:300]}")
             json_text = raw_text.replace("```json", "").replace("```", "").strip()
             gemini_result = json.loads(json_text)
+            
+            # Active Learning (Vision)
+            ext_text = gemini_result.get("extracted_text", "")
+            r_level = gemini_result.get("risk_level")
+            if ML_AVAILABLE and ext_text and len(ext_text.split()) > 3 and r_level in ("High", "Moderate", "Low"):
+                global ml_model
+                TRAINING_DATA.append((ext_text, r_level))
+                ml_model = train_risk_model()
+                print(f"[INFO] Active Learning (Vision): ML model retrained -> {r_level}")
+            
             return jsonify({
                 "status": "success",
-                "extracted_text": "Analyzed directly via Gemini Vision API",
-                "risk_level": gemini_result.get("risk_level", "Unknown"),
+                "extracted_text": ext_text if ext_text else "Analyzed directly via Gemini Vision API",
+                "risk_level": r_level or "Unknown",
                 "summary": gemini_result.get("summary", ""),
                 "action": gemini_result.get("immediate_action", ""),
                 "source": "gemini_vision"
