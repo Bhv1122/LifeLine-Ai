@@ -300,134 +300,114 @@ def get_biothings_context(text):
 # CORE ANALYSIS ENGINE
 # ─────────────────────────────────────────────
 def analyze_medical_text(text):
-    """Full pipeline: Symptom DB → ML model → Gemini → final summary."""
-    text_lower = text.lower().strip()
-
+    """Full pipeline: ML model → BioThings → Gemini fallback → Heuristics."""
     result = {
         "risk_level": "Low",
-        "summary": "",
-        "immediate_action": "",
+        "summary": "No critical markers detected.",
+        "immediate_action": "Continue routine monitoring.",
         "ml_confidence": None,
         "ml_probas": None,
         "source": "heuristic"
     }
 
-    # ─── Step 1: Symptom Database keyword scan (fastest, always runs) ───
-    markers = {}
-    try:
-        with open("symptoms_database.json", "r") as f:
-            markers = json.load(f)
-    except Exception:
-        markers = {
-            'High': ['troponin', 'infarction', 'stroke', 'hemorrhage', 'seizure', 'critical', 'cardiac arrest'],
-            'Moderate': ['elevated', 'hypertension', 'anemia', 'fever', 'vomiting', 'chest pain'],
-            'Low': ['normal', 'healthy', 'stable', 'headache', 'cough', 'cold']
-        }
-
-    found_terms = []
-    db_risk = "Low"
-
-    for level in ['High', 'Moderate', 'Low']:
-        for term in markers.get(level, []):
-            if term in text_lower:
-                found_terms.append((term, level))
-                # Escalate risk level only upward
-                if db_risk == "Low" and level in ("Moderate", "High"):
-                    db_risk = level
-                elif db_risk == "Moderate" and level == "High":
-                    db_risk = "High"
-
-    result["risk_level"] = db_risk
-
-    # ─── Step 2: ML Model Prediction (refines the db result) ───
+    # --- Step 1: ML Model Prediction ---
     ml_result = ml_predict_risk(text)
     if ml_result:
-        ml_risk = ml_result["risk_level"]
+        result["risk_level"] = ml_result["risk_level"]
         result["ml_confidence"] = ml_result["confidence"]
         result["ml_probas"] = dict(zip(ml_result["classes"], ml_result["probas"]))
         result["source"] = "ml_model"
-        # Use whichever is higher: DB keyword result or ML prediction
-        risk_order = {"Low": 0, "Moderate": 1, "High": 2}
-        if risk_order.get(ml_risk, 0) >= risk_order.get(db_risk, 0):
-            result["risk_level"] = ml_risk
 
-    # ─── Step 3: Gemini API (overrides everything if available) ───
+    # --- Step 2: BioThings Context ---
+    biothings_context = get_biothings_context(text)
+
+    # --- Step 3: Gemini API (if configured) ---
     api_key = os.environ.get("GEMINI_API_KEY", "")
     if genai and api_key:
-        biothings_context = get_biothings_context(text)
-        # Build a rich list of matched symptom terms for Gemini context
-        matched_str = ", ".join([t for t, _ in found_terms[:6]]) if found_terms else "none"
-        prompt = f"""You are a precise emergency medical triage AI.
+        prompt = f"""
+        Act as a clinical diagnostic model. Extract key biomarkers from the text below,
+        verify bio-technical terms using BioThings context provided, compare against emergency
+        thresholds, and output ONLY a valid JSON object with these keys:
+        'risk_level' (Low, Moderate, or High),
+        'summary' (plain English jargon-free, max 2 sentences),
+        'immediate_action' (ONE specific action, max 15 words).
 
-Patient Input: "{text}"
-Pre-detected symptom keywords: [{matched_str}]
-Local ML Assessment: {result['risk_level']} (confidence: {result.get('ml_confidence')}%)
-BioThings medical context: {json.dumps(biothings_context)}
+        TEXT: {text}
+        BIOTHINGS CONTEXT: {json.dumps(biothings_context)}
+        ML PRE-ASSESSMENT: Risk={result['risk_level']}, Confidence={result.get('ml_confidence')}%
 
-Based on ALL the above information, output a JSON object with EXACTLY these keys:
-{{
-  "risk_level": "Low" | "Moderate" | "High",
-  "summary": "2-3 plain English sentences describing what was found and why it is concerning or not. No jargon.",
-  "immediate_action": "One clear, specific action the patient should take right now. Max 15 words."
-}}
-
-Rules:
-- If ANY High-risk symptom is present, risk_level MUST be "High"
-- Be direct and actionable — this is an emergency app
-- Output ONLY valid JSON, no markdown, no extra text."""
-
+        Output strictly valid JSON and nothing else.
+        """
         try:
             client = genai.Client(api_key=api_key)
             response = client.models.generate_content(
                 model="gemini-2.0-flash",
                 contents=prompt
             )
-            json_text = response.text.strip().replace("```json", "").replace("```", "").strip()
+            json_text = response.text.strip().replace("```json", "").replace("```", "")
             gemini_result = json.loads(json_text)
-            # Only accept valid keys
-            if gemini_result.get("risk_level") in ("Low", "Moderate", "High"):
-                result["risk_level"] = gemini_result["risk_level"]
-            if gemini_result.get("summary"):
-                result["summary"] = gemini_result["summary"]
-            if gemini_result.get("immediate_action"):
-                result["immediate_action"] = gemini_result["immediate_action"]
+            result.update(gemini_result)
             result["source"] = "gemini"
-            print(f"[Gemini] Risk: {result['risk_level']} | Action: {result['immediate_action']}")
         except Exception as e:
             print(f"[Gemini Error] {e}")
 
-    # ─── Step 4: Active Learning — retrain ML with Gemini-confirmed labels ───
-    if result["source"] == "gemini" and ML_AVAILABLE and len(text.split()) > 2:
+    # --- ACTIVE LEARNING: Auto-Train ML model ---
+    if result["source"] in ("gemini", "heuristic") and ML_AVAILABLE:
         new_label = result.get("risk_level")
-        if new_label in ("High", "Moderate", "Low"):
+        if new_label in ("High", "Moderate", "Low") and len(text.split()) > 3:
             global ml_model
             TRAINING_DATA.append((text, new_label))
             ml_model = train_risk_model()
-            print(f"[Active Learning] Retrained ML with Gemini label → {new_label}")
+            print(f"[INFO] Active Learning: ML model retrained with new {result['source']} sample -> {new_label}")
 
-    # ─── Step 5: Generate summary/action if Gemini didn't provide one ───
-    if not result["summary"] or not result["immediate_action"]:
-        terms_str = ', '.join([t for t, _ in found_terms[:4]]) if found_terms else 'general symptoms'
-        risk = result["risk_level"]
+    # --- Step 4: Heuristic fallback for summary/action ---
+    if result["source"] in ("ml_model", "heuristic"):
+        text_lower = text.lower()
+        
+        # Load the comprehensive symptoms database
+        markers = {}
+        try:
+            with open("symptoms_database.json", "r") as f:
+                markers = json.load(f)
+        except Exception:
+            # Fallback if file is missing
+            markers = {
+                'High': ['troponin', 'infarction', 'stroke', 'hemorrhage', 'seizure', 'critical'],
+                'Moderate': ['elevated', 'hypertension', 'anemia', 'thyroid', 'cholesterol'],
+                'Low': ['normal', 'healthy', 'stable', 'within range']
+            }
 
-        summaries = {
-            "High": (
-                f"CRITICAL: Symptoms detected — {terms_str}. This is a potential life-threatening emergency.",
-                "Call emergency services (102) immediately and do not move the patient."
-            ),
-            "Moderate": (
-                f"Elevated health indicators detected: {terms_str}. These require prompt medical evaluation.",
-                "Visit a doctor or urgent care clinic today. Do not ignore these symptoms."
-            ),
-            "Low": (
-                f"Mild symptoms reported ({terms_str}). No immediate emergency detected.",
-                "Rest, stay hydrated, and monitor your symptoms. See a doctor if they worsen."
-            )
-        }
-        result["summary"], result["immediate_action"] = summaries.get(risk, summaries["Low"])
+        found_terms = []
+        highest_risk_found = "Low"
+        
+        # We check High first, then Moderate, then Low
+        for level in ['High', 'Moderate', 'Low']:
+            for term in markers.get(level, []):
+                if term in text_lower:
+                    found_terms.append(term)
+                    if highest_risk_found == "Low" and level != "Low":
+                        highest_risk_found = level
+                    elif highest_risk_found == "Moderate" and level == "High":
+                        highest_risk_found = "High"
+
+        # If this is purely a heuristic run, override the default "Low" risk level
+        if result["source"] == "heuristic" and found_terms:
+            result["risk_level"] = highest_risk_found
+
+        # Build a text-aware summary
+        terms_str = ', '.join(found_terms[:4]) if found_terms else 'general symptoms'
+
+        if result["risk_level"] == "High":
+            result["summary"] = f"Critical markers detected ({terms_str}). Immediate medical intervention is required."
+            result["immediate_action"] = "Call emergency services (102) immediately."
+        elif result["risk_level"] == "Moderate":
+            result["summary"] = f"Elevated or borderline markers found ({terms_str}). Medical attention is recommended soon."
+            result["immediate_action"] = "Schedule an urgent consultation with your doctor today."
+        else:
+            result["summary"] = f"No critical markers detected ({terms_str}). Your results appear within safe limits."
+            result["immediate_action"] = "Continue your routine and review at your next visit."
 
     return result
-
 
 # ─────────────────────────────────────────────
 # HOSPITAL FINDER (OpenStreetMap Overpass API)
@@ -923,6 +903,5 @@ if __name__ == '__main__':
 
     print("\n* LifeLine AI Server is starting...")
     print(f"  Local access: http://127.0.0.1:5000")
-    print(f"  Network access: http://{IP}:5000")
     
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='127.0.0.1', port=5000, debug=True)
