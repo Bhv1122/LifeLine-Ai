@@ -9,13 +9,6 @@ from datetime import datetime
 from flask import Flask, render_template, request, jsonify, session
 from werkzeug.utils import secure_filename
 
-# Load .env file for local development (safe — .env is git-ignored)
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass  # python-dotenv not installed, rely on system env vars
-
 try:
     from twilio.rest import Client as TwilioClient
 except ImportError:
@@ -90,7 +83,7 @@ init_db()
 # ML MEDICAL RISK CLASSIFIER
 # ─────────────────────────────────────────────
 TRAINING_DATA = [
-    # High risk - full sentences
+    # (text, label)
     ("severe chest pain radiating left arm shortness of breath", "High"),
     ("myocardial infarction detected troponin elevated critical", "High"),
     ("stroke symptoms facial drooping arm weakness speech difficulty", "High"),
@@ -101,36 +94,6 @@ TRAINING_DATA = [
     ("seizure epilepsy convulsion status epilepticus", "High"),
     ("glucose level 40 hypoglycemia diabetic emergency", "High"),
     ("oxygen saturation 85 percent respiratory failure", "High"),
-    ("stemi acute myocardial infarction critical", "High"),
-    ("gunshot wound massive arterial bleeding", "High"),
-    ("patient is turning blue cyanosis choking", "High"),
-    ("sudden loss of vision severe headache subarachnoid", "High"),
-    ("third degree burns covering 30 percent body", "High"),
-    # High risk - single keywords & short phrases
-    ("heart attack", "High"),
-    ("stroke", "High"),
-    ("cardiac arrest", "High"),
-    ("not breathing", "High"),
-    ("no pulse", "High"),
-    ("unconscious", "High"),
-    ("unresponsive", "High"),
-    ("choking", "High"),
-    ("anaphylaxis", "High"),
-    ("severe bleeding", "High"),
-    ("hemorrhage", "High"),
-    ("seizure", "High"),
-    ("convulsion", "High"),
-    ("sepsis", "High"),
-    ("pulmonary embolism", "High"),
-    ("coma", "High"),
-    ("infarction", "High"),
-    ("overdose", "High"),
-    ("stopped breathing", "High"),
-    ("turning blue", "High"),
-    ("cyanosis", "High"),
-    ("suicidal", "High"),
-
-    # Moderate risk - full sentences
     ("borderline diabetes elevated sugar levels fasting glucose 120", "Moderate"),
     ("mildly elevated blood pressure 140 over 90 hypertension stage 1", "Moderate"),
     ("elevated cholesterol LDL 190 mg/dL borderline high", "Moderate"),
@@ -140,45 +103,7 @@ TRAINING_DATA = [
     ("mild chest discomfort occasional palpitations stress", "Moderate"),
     ("pain in joints mild arthritis inflammation", "Moderate"),
     ("liver enzymes slightly elevated SGPT 60", "Moderate"),
-    ("dizzy spells occasional tension", "Moderate"),
-    ("asthma attack wheezing shortness of breath", "Moderate"),
-    ("severe abdominal pain vomiting suspected appendicitis", "Moderate"),
-    ("migraine aura sensitivity to light", "Moderate"),
-    ("deep cut laceration requiring stitches", "Moderate"),
-    ("sprained ankle swelling pain upon walking", "Moderate"),
-    # Moderate risk - single keywords & short phrases
-    ("vomiting", "Moderate"),
-    ("dizziness", "Moderate"),
-    ("high fever", "Moderate"),
-    ("fever", "Moderate"),
-    ("chest tightness", "Moderate"),
-    ("shortness of breath", "Moderate"),
-    ("breathless", "Moderate"),
-    ("palpitations", "Moderate"),
-    ("hypertension", "Moderate"),
-    ("high blood pressure", "Moderate"),
-    ("asthma", "Moderate"),
-    ("wheezing", "Moderate"),
-    ("abdominal pain", "Moderate"),
-    ("stomach pain", "Moderate"),
-    ("fracture", "Moderate"),
-    ("broken bone", "Moderate"),
-    ("concussion", "Moderate"),
-    ("migraine", "Moderate"),
-    ("anemia", "Moderate"),
-    ("diabetes", "Moderate"),
-    ("high sugar", "Moderate"),
-    ("kidney pain", "Moderate"),
-    ("urinary pain", "Moderate"),
-    ("blood in urine", "Moderate"),
-    ("joint pain", "Moderate"),
-    ("swelling", "Moderate"),
-    ("food poisoning", "Moderate"),
-    ("dehydration", "Moderate"),
-    ("appendicitis", "Moderate"),
-    ("chest pain", "Moderate"),
-
-    # Low risk - full sentences
+    ("dizzy spells occasional headache tension", "Moderate"),
     ("normal blood work all values within range healthy", "Low"),
     ("routine checkup no abnormalities found", "Low"),
     ("blood pressure 118 over 76 normal healthy", "Low"),
@@ -189,48 +114,6 @@ TRAINING_DATA = [
     ("mild fatigue adequate sleep recommended", "Low"),
     ("hemoglobin 14 normal red blood cells healthy", "Low"),
     ("ECG normal sinus rhythm no arrhythmia detected", "Low"),
-    ("common cold mild cough runny nose", "Low"),
-    ("minor paper cut scrape bleeding stopped", "Low"),
-    ("mild indigestion heartburn after eating", "Low"),
-    ("seasonal allergies sneezing watery eyes", "Low"),
-    ("tension headache resolved with ibuprofen", "Low"),
-    # Low risk - single keywords & short phrases
-    ("headache", "Low"),
-    ("cold", "Low"),
-    ("cough", "Low"),
-    ("sneeze", "Low"),
-    ("sneezing", "Low"),
-    ("runny nose", "Low"),
-    ("sore throat", "Low"),
-    ("mild fever", "Low"),
-    ("fatigue", "Low"),
-    ("tired", "Low"),
-    ("insomnia", "Low"),
-    ("skin rash", "Low"),
-    ("mild rash", "Low"),
-    ("heartburn", "Low"),
-    ("indigestion", "Low"),
-    ("muscle ache", "Low"),
-    ("body ache", "Low"),
-    ("bruise", "Low"),
-    ("cut", "Low"),
-    ("minor cut", "Low"),
-    ("allergies", "Low"),
-    ("dry skin", "Low"),
-    ("acne", "Low"),
-    ("bloating", "Low"),
-    ("constipation", "Low"),
-    ("toothache", "Low"),
-    ("earache", "Low"),
-    ("eye irritation", "Low"),
-    ("blister", "Low"),
-    ("normal", "Low"),
-    ("healthy", "Low"),
-    ("fine", "Low"),
-    ("no symptoms", "Low"),
-    ("feeling ok", "Low"),
-    ("mild pain", "Low"),
-    ("slight discomfort", "Low"),
 ]
 
 MODEL_PATH = 'ml_model.pkl'
@@ -904,4 +787,4 @@ if __name__ == '__main__':
     print("\n* LifeLine AI Server is starting...")
     print(f"  Local access: http://127.0.0.1:5000")
     
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='127.0.0.1', port=5000, debug=True)
